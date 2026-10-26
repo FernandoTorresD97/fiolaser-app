@@ -1,0 +1,100 @@
+server:
+  port: ${PORT:8080}
+  forward-headers-strategy: framework
+  servlet:
+    session:
+      timeout: 5m
+      cookie:
+        http-only: true
+        same-site: lax
+
+spring:
+  application:
+    name: fiolaser-app
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:fiolaser}${DB_URL_OPTIONS:}
+    username: ${DB_USER:fiolaser}
+    password: ${DB_PASSWORD:changeit}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    properties:
+      security.protocol: ${KAFKA_SECURITY_PROTOCOL:PLAINTEXT}
+      sasl.mechanism: ${KAFKA_SASL_MECHANISM:AWS_MSK_IAM}
+      sasl.jaas.config: ${KAFKA_SASL_JAAS_CONFIG:software.amazon.msk.auth.iam.IAMLoginModule required;}
+      sasl.client.callback.handler.class: ${KAFKA_SASL_CALLBACK:software.amazon.msk.auth.iam.IAMClientCallbackHandler}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+      properties:
+        enable.idempotence: true
+        delivery.timeout.ms: 10000
+        request.timeout.ms: 5000
+    consumer:
+      group-id: notification-service
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    listener:
+      ack-mode: record
+  mail:
+    host: ${SMTP_HOST:localhost}
+    port: ${SMTP_PORT:1025}
+    username: ${SMTP_USER:}
+    password: ${SMTP_PASSWORD:}
+    properties:
+      mail.smtp.auth: ${SMTP_AUTH:false}
+      mail.smtp.starttls.enable: ${SMTP_TLS:false}
+      mail.smtp.starttls.required: ${SMTP_TLS:false}
+      mail.smtp.connectiontimeout: 5000
+      mail.smtp.timeout: 10000
+      mail.smtp.writetimeout: 10000
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID:changeme}
+            client-secret: ${GOOGLE_CLIENT_SECRET:changeme}
+            scope: openid, profile, email
+            redirect-uri: "${PUBLIC_BASE_URL:http://localhost:5500}/login/oauth2/code/{registrationId}"
+
+app:
+  security:
+    jwt:
+      secret: ${JWT_SECRET:troque-este-segredo-por-um-valor-forte-de-producao-min-32-bytes}
+      expiration-ms: 3600000
+    cpf:
+      pepper: ${CPF_PEPPER}
+      aes-key: ${CPF_AES_KEY}
+  cors:
+    frontend-url: ${FRONTEND_URL:http://localhost:5500}
+  outbox:
+    enabled: ${OUTBOX_ENABLED:true}
+  notifications:
+    enabled: ${NOTIFICATIONS_ENABLED:false}
+    from: ${SMTP_FROM:reservas@localhost}
+    sms-enabled: ${SMS_ENABLED:false}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  health:
+    mail:
+      enabled: false
+  endpoint:
+    health:
+      show-details: never
+logging:
+  level:
+    br.com.fiolaser: INFO

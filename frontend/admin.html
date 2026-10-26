@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="referrer" content="no-referrer"><title>Administração — Fiolaser</title><link rel="stylesheet" href="css/style.css"></head>
+<body><div id="header-fiolaser"></div><main class="secao"><div class="container">
+<h1>Administração</h1><p id="admin-status" role="status" aria-live="polite"></p>
+<div id="admin-content" hidden>
+<section aria-labelledby="bookings-title"><h2 id="bookings-title">Agendamentos</h2>
+<div class="admin-filtros"><div class="campo"><label for="period-start">De</label><input id="period-start" type="date" required></div>
+<div class="campo"><label for="period-end">Até</label><input id="period-end" type="date" required></div>
+<button id="refresh" class="btn btn-primario">Filtrar</button><button id="export" class="btn btn-secundario">Exportar CSV</button>
+<button id="new-booking" class="btn btn-secundario">Novo agendamento</button></div>
+<p id="admin-summary"></p><div class="admin-tabela-wrap"><table class="admin-tabela"><thead><tr><th>Cliente</th><th>Contato</th><th>Procedimento</th><th>Início</th><th>Valor contratado</th><th>Pagamento na unidade</th><th>Status</th><th>Ações</th></tr></thead><tbody id="bookings-body"></tbody></table></div>
+<form id="booking-form" class="admin-editor" hidden><h3 id="editor-title">Novo agendamento</h3>
+<input id="booking-id" type="hidden">
+<div class="campo"><label for="client-search">Buscar cliente por nome ou e-mail</label><input id="client-search" type="search"><button id="search-clients" type="button" class="btn btn-secundario">Buscar</button></div>
+<div class="campo"><label for="client">Cliente com cadastro completo</label><select id="client" required></select></div>
+<div class="campo"><label for="service">Procedimento</label><select id="service" required></select></div>
+<div class="campo"><label for="booking-time">Data e horário (Bahia)</label><input id="booking-time" type="datetime-local" step="1800" required></div>
+<div class="campo"><label for="payment">Forma de pagamento na unidade</label><select id="payment"><option value="PIX">Pix</option><option value="CARTAO">Cartão</option><option value="DINHEIRO">Dinheiro</option></select></div>
+<p>A reserva não realiza cobrança online.</p><button class="btn btn-primario">Salvar agendamento</button><button id="close-editor" type="button" class="btn btn-secundario">Fechar</button><p id="editor-status" role="status"></p></form>
+</section>
+<section style="margin-top:40px" aria-labelledby="users-title"><h2 id="users-title">Usuários e administradores</h2>
+<p>Busque uma conta existente para alterar o acesso. Cada busca retorna até 100 usuários.</p>
+<div class="admin-filtros"><div class="campo"><label for="user-search">Nome ou e-mail</label><input id="user-search" type="search"></div><button id="search-users" class="btn btn-secundario">Buscar usuários</button></div>
+<div class="admin-tabela-wrap"><table class="admin-tabela"><thead><tr><th>Nome</th><th>E-mail</th><th>Perfil</th><th>Ativo</th><th>Ações</th></tr></thead><tbody id="users-body"></tbody></table></div>
+</section></div></div></main><div id="footer-fiolaser"></div>
+<script src="js/config.js"></script><script src="js/main.js"></script><script src="js/admin.js"></script></body></html>

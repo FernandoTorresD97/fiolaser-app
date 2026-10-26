@@ -1,0 +1,25 @@
+spring:
+  datasource:
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+server:
+  servlet:
+    session:
+      cookie:
+        secure: true
+app:
+  security:
+    jwt:
+      secret: ${JWT_SECRET}
+    cpf:
+      pepper: ${CPF_PEPPER}
+      aes-key: ${CPF_AES_KEY}
+  cors:
+    frontend-url: ${FRONTEND_URL}

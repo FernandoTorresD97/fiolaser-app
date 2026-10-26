@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agendar — Fiolaser Cruz das Almas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body data-page="agendamento">
+
+<div id="header-fiolaser"></div>
+
+<section class="secao">
+  <div class="container" style="max-width:900px;">
+    <div class="secao-titulo">
+      <h1 style="font-size:2.1rem">Agendar horário</h1>
+      <p>Em 3 passos rápidos você garante seu horário.</p>
+    </div>
+
+    <div id="aviso-login" class="msg-erro" style="display:none; max-width:none;">
+      Você precisa <a href="login.html" style="color:var(--vermelho-escuro); font-weight:700;">entrar</a> ou
+      <a href="cadastro.html" style="color:var(--vermelho-escuro); font-weight:700;">criar uma conta</a> para confirmar um agendamento.
+    </div>
+
+    <div class="etapas-indicador" id="etapas-indicador"></div>
+
+    <div class="etapa-card">
+
+      <!-- Etapa 1: serviço -->
+      <div class="etapa" id="etapa-1">
+        <h3 style="margin-bottom:16px;">Escolha o procedimento</h3>
+        <div id="lista-servicos" class="lista-servicos-dinamica">
+          <p style="color:var(--cinza); font-size:0.88rem;">Carregando...</p>
+        </div>
+      </div>
+
+      <!-- Etapa 2: data e horário -->
+      <div class="etapa" id="etapa-2" style="display:none;">
+        <div class="etapa-cabecalho">
+          <button class="btn-voltar" onclick="irParaEtapa(1)"><span aria-hidden="true">←</span> Trocar procedimento</button>
+        </div>
+        <h3 style="margin-bottom:16px;">Escolha o dia e o horário</h3>
+        <div class="calendario-card" style="border:none; padding:0;">
+          <div class="calendario-cabecalho">
+            <button id="mes-anterior" aria-label="Mês anterior">‹</button>
+            <h3 id="mes-atual" style="margin:0;"></h3>
+            <button id="mes-proximo" aria-label="Próximo mês">›</button>
+          </div>
+          <div class="grid-dias" id="grid-dias"></div>
+
+          <div id="bloco-horarios" style="display:none;">
+            <h3 style="font-size:1rem; margin-bottom:14px;">Horários disponíveis</h3>
+            <div class="grid-horarios" id="grid-horarios"></div>
+            <div class="legenda">
+              <span><span class="ponto livre"></span> Livre</span>
+              <span><span class="ponto ocupado-pt"></span> Reservado</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Etapa 3: pagamento e confirmação -->
+      <div class="etapa" id="etapa-3" style="display:none;">
+        <div class="etapa-cabecalho">
+          <button class="btn-voltar" onclick="irParaEtapa(2)"><span aria-hidden="true">←</span> Trocar horário</button>
+        </div>
+        <h3 style="margin-bottom:16px;">Confirme seu agendamento</h3>
+
+        <div class="resumo-agendamento" id="resumo-agendamento"></div>
+
+        <h3 style="font-size:1rem; margin:22px 0 12px;">Forma de pagamento na unidade</h3><p>A reserva não realiza cobrança online. O pagamento será combinado no atendimento.</p>
+        <div class="pagamento-opcoes">
+          <label><input type="radio" name="pagamento" value="CARTAO" checked><span>Cartão</span></label>
+          <label><input type="radio" name="pagamento" value="PIX"><span>Pix</span></label>
+          <label><input type="radio" name="pagamento" value="DINHEIRO"><span>Dinheiro</span></label>
+        </div>
+        <button id="btn-confirmar" class="btn btn-primario btn-bloco">Confirmar agendamento</button>
+        <div class="msg-erro" id="msg-erro-agendamento"></div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<div id="footer-fiolaser"></div>
+
+<script src="js/config.js"></script>
+<script src="js/main.js"></script>
+<script>
+let servicos = [];
+let servicoSelecionado = null;
+let mesReferencia = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+let diaSelecionado = null;
+let horarioSelecionado = null;
+let etapaAtual = 1;
+
+const DOW = ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
+const MESES = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+
+function renderizarIndicador() {
+  const nomes = ["Procedimento", "Data e horário", "Pagamento"];
+  document.getElementById("etapas-indicador").innerHTML = nomes.map((nome, i) => {
+    const n = i + 1;
+    const estado = n < etapaAtual ? "concluida" : n === etapaAtual ? "ativa" : "";
+    return `<div class="etapa-indicador-item ${estado}">
+      <span class="etapa-indicador-bolha">${n < etapaAtual ? "✓" : n}</span>
+      <span class="etapa-indicador-label">${nome}</span>
+    </div>`;
+  }).join('<div class="etapa-indicador-linha"></div>');
+}
+
+function irParaEtapa(n) {
+  etapaAtual = n;
+  document.querySelectorAll(".etapa").forEach((el, i) => {
+    el.style.display = (i + 1 === n) ? "block" : "none";
+    if (i + 1 === n) { el.classList.remove("etapa-anim"); void el.offsetWidth; el.classList.add("etapa-anim"); }
+  });
+  renderizarIndicador();
+  window.scrollTo({ top: document.querySelector(".etapa-card").offsetTop - 100, behavior: "smooth" });
+}
+
+async function iniciar() {
+  if (!isLogado()) document.getElementById("aviso-login").style.display = "block";
+
+  renderizarIndicador();
+
+  try {
+    if(isLogado()) { const me=await apiFetch("/api/auth/me"); if(!me.perfilCompleto) {location.replace("completar-cadastro.html");return;} }
+    servicos = await apiFetch("/api/services");
+    renderizarListaServicos();
+
+    const params = new URLSearchParams(window.location.search);
+    const slugPreSelecionado = params.get("servico");
+    const preSelecionado = servicos.find(s => s.slug === slugPreSelecionado);
+    if (preSelecionado) selecionarServico(preSelecionado);
+  } catch (e) {
+    document.getElementById("lista-servicos").innerHTML = `<p style="color:var(--cinza)">Não foi possível carregar os serviços.</p>`;
+  }
+
+  renderizarCalendario();
+}
+
+function renderizarListaServicos() {
+  const el = document.getElementById("lista-servicos");
+  el.innerHTML = servicos.map((s, i) => `
+    <button class="item-servico-dinamico" style="animation-delay:${i * 0.02}s" data-id="${s.id}" onclick='selecionarServicoPorId("${s.id}")'>
+      <span>${escapeHtml(s.nome)}</span>
+      <span class="item-servico-preco">R$ ${Number(s.preco).toFixed(2).replace(".", ",")}</span>
+    </button>
+  `).join("");
+}
+
+function selecionarServicoPorId(id) {
+  const s = servicos.find(s => s.id === id);
+  if (s) selecionarServico(s);
+}
+
+function selecionarServico(servico) {
+  servicoSelecionado = servico;
+  diaSelecionado = null;
+  horarioSelecionado = null;
+  document.getElementById("bloco-horarios").style.display = "none";
+  renderizarCalendario();
+  irParaEtapa(2);
+}
+
+function renderizarCalendario() {
+  const grid = document.getElementById("grid-dias");
+  const titulo = document.getElementById("mes-atual");
+  titulo.textContent = `${MESES[mesReferencia.getMonth()]} ${mesReferencia.getFullYear()}`;
+
+  const primeiroDiaSemana = new Date(mesReferencia.getFullYear(), mesReferencia.getMonth(), 1).getDay();
+  const totalDias = new Date(mesReferencia.getFullYear(), mesReferencia.getMonth() + 1, 0).getDate();
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+
+  let html = DOW.map(d => `<div class="dow">${d}</div>`).join("");
+  for (let i = 0; i < primeiroDiaSemana; i++) html += `<div class="dia-cel dia-vazio"></div>`;
+
+  for (let dia = 1; dia <= totalDias; dia++) {
+    const dataCel = new Date(mesReferencia.getFullYear(), mesReferencia.getMonth(), dia);
+    const passado = dataCel < hoje;
+    const iso = [dataCel.getFullYear(), String(dataCel.getMonth()+1).padStart(2,"0"), String(dataCel.getDate()).padStart(2,"0")].join("-");
+    const selecionadaClasse = diaSelecionado === iso ? "dia-selecionado" : "";
+    html += `<button class="dia-cel ${passado ? "dia-passado" : ""} ${selecionadaClasse}"
+                ${passado ? "disabled" : `onclick="selecionarDia('${iso}')"`}>${dia}</button>`;
+  }
+  grid.innerHTML = html;
+}
+
+document.getElementById("mes-anterior").addEventListener("click", () => {
+  mesReferencia = new Date(mesReferencia.getFullYear(), mesReferencia.getMonth() - 1, 1);
+  renderizarCalendario();
+});
+document.getElementById("mes-proximo").addEventListener("click", () => {
+  mesReferencia = new Date(mesReferencia.getFullYear(), mesReferencia.getMonth() + 1, 1);
+  renderizarCalendario();
+});
+
+async function selecionarDia(iso) {
+  if (!servicoSelecionado) return;
+  diaSelecionado = iso;
+  horarioSelecionado = null;
+  renderizarCalendario();
+
+  const blocoHorarios = document.getElementById("bloco-horarios");
+  const gridHorarios = document.getElementById("grid-horarios");
+  blocoHorarios.style.display = "block";
+  gridHorarios.innerHTML = `<p style="color:var(--cinza); font-size:0.85rem;">Carregando horários...</p>`;
+
+  try {
+    const selectedServiceId = servicoSelecionado.id;
+    const slots = await apiFetch(`/api/bookings/availability/${servicoSelecionado.id}?dia=${iso}`);
+    if(diaSelecionado !== iso || servicoSelecionado.id !== selectedServiceId) return;
+    gridHorarios.innerHTML = slots.map(s => {
+      const hora = s.horario.slice(11,16);
+      return s.disponivel
+        ? `<button class="slot" onclick="selecionarHorario('${s.horario}')">${hora}</button>`
+        : `<button class="slot ocupado" disabled>${hora}</button>`;
+    }).join("");
+  } catch (e) {
+    gridHorarios.innerHTML = `<p style="color:var(--cinza); font-size:0.85rem;">Não foi possível carregar os horários.</p>`;
+  }
+}
+
+function selecionarHorario(horarioIso) {
+  horarioSelecionado = horarioIso;
+  montarResumo();
+  irParaEtapa(3);
+}
+
+function montarResumo() {
+  const dt = new Date(horarioSelecionado);
+  const dataFmt = dt.toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" });
+  const horaFmt = horarioSelecionado.slice(11,16);
+  document.getElementById("resumo-agendamento").innerHTML = `
+    <div class="resumo-linha"><span>Procedimento</span><strong>${escapeHtml(servicoSelecionado.nome)}</strong></div>
+    <div class="resumo-linha"><span>Data</span><strong>${dataFmt}</strong></div>
+    <div class="resumo-linha"><span>Horário</span><strong>${horaFmt}</strong></div>
+    <div class="resumo-linha"><span>Valor</span><strong>R$ ${Number(servicoSelecionado.preco).toFixed(2).replace(".", ",")}</strong></div>
+  `;
+}
+
+document.getElementById("btn-confirmar").addEventListener("click", async () => {
+  const msgErro = document.getElementById("msg-erro-agendamento");
+  msgErro.style.display = "none";
+
+  if (!isLogado()) {
+    window.location.href = "login.html";
+    return;
+  }
+
+  if(!horarioSelecionado || !servicoSelecionado) return;
+  const button=document.getElementById("btn-confirmar");button.disabled=true;
+  const formaPagamento = document.querySelector('input[name="pagamento"]:checked').value;
+
+  try {
+    await apiFetch("/api/bookings", {
+      method: "POST",
+      body: JSON.stringify({ serviceId: servicoSelecionado.id, horario: horarioSelecionado, formaPagamento })
+    });
+    alert("Reserva recebida! Nenhuma cobrança online foi realizada.");
+    horarioSelecionado = null;
+    selecionarDia(diaSelecionado);
+    irParaEtapa(2);
+  } catch (err) {
+    msgErro.textContent = err.message;
+    msgErro.style.display = "block";
+  } finally { button.disabled=false; }
+});
+
+iniciar();
+</script>
+</body>
+</html>

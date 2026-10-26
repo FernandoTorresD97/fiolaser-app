@@ -1,0 +1,14 @@
+.env
+.env.*
+!.env.example
+**/target/
+**/node_modules/
+.idea/
+infra/aws/.terraform/
+infra/aws/*.tfstate*
+infra/aws/*.tfvars
+!infra/aws/terraform.tfvars.example
+artifacts/
+*.log
+*.iml
+.DS_Store

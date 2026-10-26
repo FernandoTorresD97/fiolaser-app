@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Serviços — Fiolaser Cruz das Almas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body data-page="servicos">
+
+<div id="header-fiolaser"></div>
+
+<section class="secao">
+  <div class="container">
+    <div class="secao-titulo">
+      <h1 style="font-size:2.2rem">Nossos procedimentos</h1>
+      <p>Conheça cada tratamento oferecido pela Fiolaser Cruz das Almas.</p>
+    </div>
+
+    <div class="filtro-categorias" id="filtro-categorias"></div>
+
+    <div id="grid-servicos" class="grid-servicos grid-servicos-dinamico">
+      <p style="color:var(--cinza)">Carregando procedimentos...</p>
+    </div>
+  </div>
+</section>
+
+<div id="footer-fiolaser"></div>
+
+<script src="js/config.js"></script>
+<script src="js/main.js"></script>
+<script>
+// Categoria por procedimento — usado só pro filtro visual, não vem do backend.
+const CATEGORIAS = {
+  "depilacao-a-laser": "Depilação", "remocao-tatuagem": "Depilação", "despigmentacao-sobrancelhas": "Depilação",
+  "limpeza-de-pele": "Rosto", "revitalizacao-facial": "Rosto", "peeling-de-diamante": "Rosto",
+  "preenchimento-facial": "Rosto", "bioestimulador": "Rosto", "toxina-botulinica": "Rosto",
+  "peeling-hollywood": "Rosto", "microagulhamento": "Rosto", "camuflagem-cicatriz": "Rosto",
+  "criolipolise": "Corpo", "massagem-modeladora": "Corpo", "massagem-relaxante": "Corpo",
+  "drenagem-linfatica": "Corpo", "endermologia": "Corpo", "power-bumbum": "Corpo",
+  "fiolaser-celulite": "Corpo", "fiolaser-flacidez": "Corpo", "striout": "Corpo",
+  "lipoenzimatica": "Corpo", "radiofrequencia": "Corpo", "ultracavitacao": "Corpo",
+  "corrente-russa": "Corpo", "hidrolipoclasia": "Corpo", "camuflagem-estrias": "Corpo",
+  "harmonizacao-corporal-intima": "Corpo", "clareamento-intimo": "Corpo",
+  "lobuloplastia": "Corpo", "remocao-sinais": "Corpo",
+  "terapia-capilar": "Capilar",
+  "peim": "Estética Avançada"
+};
+
+let todosServicos = [];
+let categoriaAtiva = "Todos";
+
+async function carregarServicos() {
+  const container = document.getElementById("grid-servicos");
+  try {
+    todosServicos = await apiFetch("/api/services");
+    montarFiltros();
+    renderizarServicos();
+  } catch (e) {
+    container.innerHTML = `<p style="color:var(--cinza)">Não foi possível carregar os procedimentos agora. Tente novamente em instantes.</p>`;
+  }
+}
+
+function montarFiltros() {
+  const categorias = ["Todos", ...new Set(todosServicos.map(s => CATEGORIAS[s.slug] || "Outros"))];
+  const el = document.getElementById("filtro-categorias");
+  el.innerHTML = categorias.map(c => `
+    <button class="filtro-pill ${c === categoriaAtiva ? "ativo" : ""}" onclick="filtrarPor('${c}')">${c}</button>
+  `).join("");
+}
+
+function filtrarPor(categoria) {
+  categoriaAtiva = categoria;
+  montarFiltros();
+  renderizarServicos();
+}
+
+function renderizarServicos() {
+  const container = document.getElementById("grid-servicos");
+  const lista = categoriaAtiva === "Todos"
+    ? todosServicos
+    : todosServicos.filter(s => (CATEGORIAS[s.slug] || "Outros") === categoriaAtiva);
+
+  container.innerHTML = lista.map((s, i) => `
+    <a class="card-servico card-servico-dinamico" style="animation-delay:${i * 0.03}s" href="agendamento.html?servico=${s.slug}">
+      <span class="tag">${CATEGORIAS[s.slug] || "Procedimento"}</span>
+      <h3>${s.nome}</h3>
+      <p>${s.descricao}</p>
+      <div class="rodape-card">
+        <span>${s.duracaoMinutos} min</span>
+        <span>R$ ${Number(s.preco).toFixed(2).replace(".", ",")}</span>
+      </div>
+    </a>
+  `).join("");
+}
+
+carregarServicos();
+</script>
+</body>
+</html>

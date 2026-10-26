@@ -1,0 +1,12 @@
+region = "sa-east-1"
+name = "fiolaser"
+zone_id = "Z_SUBSTITUA"
+api_origin_domain = "origin-api.seudominio.com.br"
+app_secret_arn = "arn:aws:secretsmanager:sa-east-1:123456789012:secret:fiolaser-app-SUBSTITUA"
+image_tag = "release-1"
+desired_count = 0
+notifications_enabled = false
+smtp_host = ""
+smtp_user = ""
+smtp_from = ""
+bootstrap_email = ""

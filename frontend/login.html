@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Entrar — Fiolaser Cruz das Almas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body data-page="login">
+
+<div id="header-fiolaser"></div>
+
+<div class="auth-wrap">
+  <div class="auth-card">
+    <h2 style="margin-bottom:6px;">Entrar na sua conta</h2>
+    <p style="color:var(--cinza);font-size:0.9rem;margin-bottom:20px;">Bom te ver de novo.</p>
+
+    <a class="btn btn-google btn-bloco" href="#" onclick="loginComGoogle(); return false;">
+      Continuar com Google
+    </a>
+    <div class="divisor">ou com e-mail/número</div>
+
+    <div class="msg-erro" id="msg-erro"></div>
+
+    <form id="form-login">
+      <div class="campo">
+        <label for="identificador">E-mail ou número</label>
+        <input type="text" id="identificador" required>
+      </div>
+      <div class="campo">
+        <label for="senha">Senha</label>
+        <input type="password" id="senha" required>
+      </div>
+      <button type="submit" class="btn btn-primario btn-bloco">Entrar</button>
+    </form>
+
+    <p style="text-align:center; margin-top:18px; font-size:0.9rem;">
+      Não tem conta? <a href="cadastro.html" style="color:var(--vermelho); font-weight:600;">Criar conta</a>
+    </p>
+  </div>
+</div>
+
+<div id="footer-fiolaser"></div>
+
+<script src="js/config.js"></script>
+<script src="js/main.js"></script>
+<script>
+document.getElementById("form-login").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const msgErro = document.getElementById("msg-erro");
+  msgErro.style.display = "none";
+
+  try {
+    const resp = await apiFetch("/api/auth/login", {
+      method: "POST",
+      body: JSON.stringify({
+        identificador: document.getElementById("identificador").value,
+        senha: document.getElementById("senha").value
+      })
+    });
+    sessionStorage.setItem("fiolaser_token", resp.token);
+    sessionStorage.setItem("fiolaser_nome", resp.nomeCompleto);
+    sessionStorage.setItem("fiolaser_role", resp.role);
+    window.location.href = resp.role === "ADMIN" ? "admin.html" : (resp.perfilCompleto ? "agendamento.html" : "completar-cadastro.html");
+  } catch (err) {
+    msgErro.textContent = err.message;
+    msgErro.style.display = "block";
+  }
+});
+
+if(new URLSearchParams(location.search).get("erro")==="google") { const el=document.getElementById("msg-erro");el.textContent="Não foi possível entrar com Google. Se já tem uma conta com este e-mail, entre com sua senha.";el.style.display="block"; }
+function loginComGoogle() {
+  window.location.href = `${API_BASE}/oauth2/authorization/google`;
+}
+</script>
+</body>
+</html>
